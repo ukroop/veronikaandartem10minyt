@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Стекла и Свет</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: #0a0a0f;
+            font-family: 'Segoe UI', Roboto, sans-serif;
+            overflow: hidden;
+            color: #fff;
+        }
+        .screen {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+            background: radial-gradient(circle at 50% 30%, #1a1a2e 0%, #0a0a0f 100%);
+        }
+
+        /* Экран старта */
+        .start-screen {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            background: #0a0a0f;
+            transition: opacity 0.8s ease;
+        }
+        .start-screen.hidden { opacity: 0; pointer-events: none; }
+        .start-title {
+            font-size: 2rem;
+            font-weight: 300;
+            letter-spacing: 5px;
+            color: #f0d9ff;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        .start-subtitle {
+            font-size: 0.9rem;
+            color: #777;
+            letter-spacing: 3px;
+            margin-bottom: 40px;
+        }
+        .start-btn {
+            padding: 15px 50px;
+            font-size: 1.1rem;
+            letter-spacing: 3px;
+            color: #fff;
+            background: transparent;
+            border: 1px solid #f0d9ff;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            position: relative;
+            z-index: 1001;
+        }
+        .start-btn:hover, .start-btn:active {
+            background: #f0d9ff;
+            color: #0a0a0f;
+            box-shadow: 0 0 35px rgba(240, 217, 255, 0.6);
+        }
+
+        /* Сцены */
+        .scene {
+            position: absolute;
+            inset: 0;
+            opacity: 0;
+            transition: opacity 1.2s ease;
+            pointer-events: none;
+            display: none; /* Скрыто по умолчанию */
+        }
+        .scene.active { opacity: 1; pointer-events: auto; display: block; }
+
+        /* Фигуры */
+        .figure {
+            position: absolute;
+            width: 40px;
+            height: 80px;
+            border-radius: 20px 20px 5px 5px;
+            transition: all 1.5s ease;
+            z-index: 10;
+        }
+        .figure .name {
+            position: absolute;
+            bottom: -25px;
+            font-size: 0.7rem;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            white-space: nowrap;
+            opacity: 0.9;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+        .figure .head {
+            position: absolute;
+            top: -22px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+        }
+
+        .artem { background: linear-gradient(180deg, #1e3a5f 0%, #0f1f33 100%); }
+        .artem .head { background: #2c4f7c; }
+        .artem .name { color: #7ab8e8; }
+
+        .veronika { background: linear-gradient(180deg, #5c4b51 0%, #3d3237 100%); }
+        .veronika .head { background: #6b5a60; }
+        .veronika .name { color: #b8a9b0; }
+
+        .veronika.rich { background: linear-gradient(180deg, #f0d9ff 0%, #c9a0dc 100%); }
+        .veronika.rich .head { background: #faf0ff; }
+        .veronika.rich .name { color: #f0d9ff; }
+
+        .child {
+            position: absolute;
+            width: 20px;
+            height: 40px;
+            border-radius: 10px 10px 3px 3px;
+            z-index: 11;
+            transition: all 1.5s ease;
+        }
+        .child .head {
+            position: absolute;
+            top: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+        }
+        .child.boy { background: #4a90d9; }
+        .child.boy .head { background: #6aade0; }
+        .child.girl { background: #d97ab5; }
+        .child.girl .head { background: #e89ac9; }
+
+        /* Субтитры */
+        .subtitle-container {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 90%;
+            max-width: 800px;
+            min-height: 100px;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: flex-start;
+            gap: 8px;
+            z-index: 100;
+            pointer-events: none;
+        }
+        .subtitle-word {
+            display: inline-block;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #f0e6ff;
+            text-shadow: 0 0 15px rgba(240, 217, 255, 0.7);
+            opacity: 0;
+            transform: translateY(-15px);
+            animation: wordIn 0.5s ease forwards;
+        }
+        @keyframes wordIn {
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .skip-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            padding: 8px 15px;
+            background: transparent;
+            border: 1px solid #444;
+            color: #777;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            z-index: 200;
+            display: none;
+        }
+        .skip-btn.visible { display: block; }
+        .skip-btn:hover { color: #f0d9ff; border-color: #f0d9ff; }
+
+        @media (max-width: 600px) {
+            .subtitle-word { font-size: 1rem; }
+            .figure { width: 30px; height: 60px; }
+            .figure .head { width: 22px; height: 22px; top: -16px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="screen">
+        <!-- Экран старта -->
+        <div class="start-screen" id="startScreen">
+            <div class="start-title">СТЕКЛА И СВЕТ</div>
+            <div class="start-subtitle">история Артема и Вероники</div>
+            <button class="start-btn" id="startBtn">Начать просмотр</button>
+        </div>
+
+        <!-- Кнопка пропуска -->
+        <button class="skip-btn" id="skipBtn">Пропустить →</button>
+
+        <!-- Субтитры -->
+        <div class="subtitle-container" id="subtitleBox"></div>
+
+        <!-- Сцена 1 -->
+        <div class="scene" id="scene1" style="background: radial-gradient(circle at 30% 40%, #1a2a3e 0%, #0a0a14 100%);">
+            <div class="figure artem" id="artem1" style="left: 30%; bottom: 20%;">
+                <div class="head"></div><div class="name">Артем</div>
+            </div>
+        </div>
+
+        <!-- Сцена 2 -->
+        <div class="scene" id="scene2" style="background: radial-gradient(circle at 70% 60%, #1f1a1e 0%, #08080a 100%);">
+            <div class="figure veronika" id="veronika2" style="left: 60%; bottom: 22%;">
+                <div class="head"></div><div class="name">Вероника</div>
+            </div>
+        </div>
+
+        <!-- Сцена 3 -->
+        <div class="scene" id="scene3" style="background: radial-gradient(circle at 50% 50%, #1a2a3e 0%, #0a0a14 100%);">
+            <div class="figure veronika" id="veronika3" style="left: 70%; bottom: 25%;">
+                <div class="head"></div><div class="name">Вероника</div>
+            </div>
+            <div class="figure artem" id="artem3" style="left: 25%; bottom: 25%;">
+                <div class="head"></div><div class="name">Артем</div>
+            </div>
+        </div>
+
+        <!-- Сцена 4 -->
+        <div class="scene" id="scene4" style="background: radial-gradient(circle at 40% 40%, #2a1a2e 0%, #0f0a14 100%);">
+            <div class="figure artem" id="artem4" style="left: 38%; bottom: 28%;">
+                <div class="head"></div><div class="name">Артем</div>
+            </div>
+            <div class="figure veronika" id="veronika4" style="left: 55%; bottom: 28%;">
+                <div class="head"></div><div class="name">Вероника</div>
+            </div>
+        </div>
+
+        <!-- Сцена 5 -->
+        <div class="scene" id="scene5" style="background: radial-gradient(circle at 50% 30%, #1a1a2e 0%, #0a0a0f 100%);">
+            <div class="figure artem" id="artem5" style="left: 30%; bottom: 30%;">
+                <div class="head"></div><div class="name">Артем</div>
+            </div>
+            <div class="figure veronika" id="veronika5" style="left: 60%; bottom: 30%;">
+                <div class="head"></div><div class="name">Вероника</div>
+            </div>
+        </div>
+
+        <!-- Сцена 6 -->
+        <div class="scene" id="scene6" style="background: radial-gradient(circle at 50% 20%, #0f0a1a 0%, #030305 100%);">
+            <div class="figure artem" id="artem6" style="left: 30%; bottom: 30%;">
+                <div class="head"></div><div class="name">Артем</div>
+            </div>
+            <div class="figure veronika" id="veronika6" style="left: 60%; bottom: 30%;">
+                <div class="head"></div><div class="name">Вероника</div>
+            </div>
+        </div>
+
+        <!-- Сцена 7 -->
+        <div class="scene" id="scene7" style="background: radial-gradient(circle at 50% 40%, #3e2a4e 0%, #1a0f2e 100%);">
+            <div class="figure artem" id="artem7" style="left: 42%; bottom: 30%;">
+                <div class="head"></div><div class="name">Артем</div>
+            </div>
+            <div class="figure veronika rich" id="veronika7" style="left: 52%; bottom: 30%;">
+                <div class="head"></div><div class="name">Вероника</div>
+            </div>
+        </div>
+
+        <!-- Сцена 8 -->
+        <div class="scene" id="scene8" style="background: radial-gradient(circle at 50% 20%, #1a0f2e 0%, #050305 100%);">
+            <div class="figure artem" id="artem8" style="left: 32%; bottom: 30%;">
+                <div class="head"></div><div class="name">Артем</div>
+            </div>
+            <div class="figure veronika rich" id="veronika8" style="left: 56%; bottom: 30%;">
+                <div class="head"></div><div class="name">Вероника</div>
+            </div>
+        </div>
+
+        <!-- Сцена 9 -->
+        <div class="scene" id="scene9" style="background: radial-gradient(circle at 50% 40%, #2e1a3e 0%, #0f0518 100%);">
+            <div class="figure artem" id="artem9" style="left: 28%; bottom: 30%;">
+                <div class="head"></div><div class="name">Артем</div>
+            </div>
+            <div class="figure veronika rich" id="veronika9" style="left: 60%; bottom: 30%;">
+                <div class="head"></div><div class="name">Вероника</div>
+            </div>
+            <div class="child boy" id="child1" style="left: 36%; bottom: 18%;"><div class="head"></div></div>
+            <div class="child girl" id="child2" style="left: 48%; bottom: 18%;"><div class="head"></div></div>
+        </div>
+    </div>
+
+    <script>
+    (function() {
+        // Ждем полной загрузки DOM
+        window.addEventListener('load', function() {
+            var startScreen = document.getElementById('startScreen');
+            var startBtn = document.getElementById('startBtn');
+            var skipBtn = document.getElementById('skipBtn');
+            var subtitleBox = document.getElementById('subtitleBox');
+
+            var started = false;
+            var timeouts = [];
+
+            function delay(ms, fn) {
+                var id = setTimeout(fn, ms);
+                timeouts.push(id);
+                return id;
+            }
+
+            // Функция показа слов
+            function showWords(text, wordDelay, holdDelay) {
+                return new Promise(function(resolve) {
+                    subtitleBox.innerHTML = '';
+                    var words = text.split(' ');
+                    var i = 0;
+                    function nextWord() {
+                        if (i >= words.length) {
+                            var holdId = setTimeout(resolve, holdDelay);
+                            timeouts.push(holdId);
+                            return;
+                        }
+                        var span = document.createElement('span');
+                        span.className = 'subtitle-word';
+                        span.textContent = words[i];
+                        subtitleBox.appendChild(span);
+                        i++;
+                        var tId = setTimeout(nextWord, wordDelay);
+                        timeouts.push(tId);
+                    }
+                    nextWord();
+                });
+            }
+
+            // Показ сцены
+            function showScene(num) {
+                var scenes = document.querySelectorAll('.scene');
+                for (var i = 0; i < scenes.length; i++) {
+                    scenes[i].classList.remove('active');
+                }
+                var scene = document.getElementById('scene' + num);
+                if (scene) scene.classList.add('active');
+            }
+
+            // Главная функция запуска
+            async function startStory() {
+                if (started) return;
+                started = true;
+                
+                // Скрываем стартовый экран
+                startScreen.classList.add('hidden');
+                skipBtn.classList.add('visible');
+
+                // Сцена 1
+                showScene(1);
+                await delay(500);
+                await showWords('Артем. Стеклянные небоскребы. Ночные огни.', 200, 800);
+                await showWords('Он привык, что все двери открываются сами.', 200, 1000);
+
+                // Сцена 2
+                showScene(2);
+                await delay(500);
+                await showWords('Вероника. Далекий город. Серые стены.', 200, 800);
+                await showWords('Она считала копейки. И мечтала о другом.', 200, 1000);
+
+                // Сцена 3
+                showScene(3);
+                await delay(500);
+                await showWords('Однажды работа позвала ее в город Артема.', 200, 800);
+                await showWords('Она вышла на перрон. С одним чемоданом.', 200, 1000);
+
+                // Сцена 4
+                showScene(4);
+                await delay(500);
+                await showWords('В тот день они столкнулись в кофейне.', 200, 800);
+                await showWords('Артем заметил ее уставший, но живой взгляд.', 200, 1000);
+
+                // Сцена 5
+                showScene(5);
+                await delay(500);
+                await showWords('Он предложил ей работу в своем доме.', 200, 800);
+                await showWords('Горничная. Она согласилась.', 200, 1000);
+
+                // Сцена 6
+                showScene(6);
+                await delay(500);
+                await showWords('Проходили недели. Между ними росло напряжение.', 200, 800);
+                await showWords('Однажды ночью они не смогли сдержаться.', 200, 1200);
+
+                // Сцена 7
+                showScene(7);
+                await delay(500);
+                await showWords('Утром он понял: это не просто работа.', 200, 800);
+                await showWords('Они поженились. Вероника стала частью его мира.', 200, 1200);
+
+                // Сцена 8
+                showScene(8);
+                await delay(500);
+                await showWords('Ночь после свадьбы. Их первая ночь как мужа и жены.', 200, 800);
+                await showWords('Они были вместе. По-настоящему.', 200, 1200);
+
+                // Сцена 9
+                showScene(9);
+                await delay(500);
+                await showWords('Через год она родила двойню.', 200, 800);
+                await showWords('Мальчик и девочка. Артем и Вероника счастливы.', 200, 1200);
+                await showWords('Конец.', 300, 2000);
+
+                skipBtn.classList.remove('visible');
+            }
+
+            // Пропуск
+            function skipToEnd() {
+                timeouts.forEach(function(id) { clearTimeout(id); });
+                showScene(9);
+                subtitleBox.innerHTML = '';
+                var text = 'Мальчик и девочка. Артем и Вероника счастливы. Конец.';
+                var words = text.split(' ');
+                words.forEach(function(w, idx) {
+                    var span = document.createElement('span');
+                    span.className = 'subtitle-word';
+                    span.textContent = w;
+                    span.style.animationDelay = (idx * 0.15) + 's';
+                    subtitleBox.appendChild(span);
+                });
+                skipBtn.classList.remove('visible');
+            }
+
+            // Привязка событий (и для клика, и для тапа)
+            startBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                startStory();
+            });
+
+            skipBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                skipToEnd();
+            });
+        });
+    })();
+    </script>
+</body>
+  </html>
